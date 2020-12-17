@@ -1,0 +1,379 @@
+﻿@{
+    //Layout = null;
+
+}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css" />
+
+
+<button type="button" class="btn btn-info btn-lg" id="btnAdd" data-target="#myModal">Add </button>
+
+<!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Add Employee</h4>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="txtFirstname1">First Name:</label>
+                    <input type="text" class="form-control" id="txtFirstname1">
+                    <input type="hidden" class="form-control" id="hdnEmpid">
+                    <label for="txtLastName1">Last Name:</label>
+                    <input type="text" class="form-control" id="txtLastName1">
+                </div>
+
+                <div class="form-inline">
+                    <label>Select Gender</label>
+                    <div class="checkbox">
+                        <label><input type="radio" class="gender" value="Male">Male</label>
+                    </div>
+                    <div class="checkbox">
+                        <label><input type="radio" class="gender" value="Female">Female</label>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label>Select Date </label>
+                    <input type="date" id="txtDate1" value="" />
+                </div>
+
+                <div class="form-group">
+                    <label>Select Image </label>
+                    <input type="file" id="image" />
+                </div>
+
+                <div class="form-group">
+                    <label for="sel1">Select Department:</label>
+                    <select class="form-control" id="deptList1">
+                    </select>
+                </div>
+                <div>
+                    <input type="submit" id="btnSubmit" class="btn btn-success" value="insert" />
+                    <input type="submit" id="btnUpdate" class="btn btn-primary " value="Update" />
+                </div>
+
+
+
+            </div>
+
+
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<table id="demodata" class="table table-bordered">
+    <thead>
+        <tr>
+            <th>EmpId</th>
+            <th>FirstName</th>
+            <th>LastName</th>
+            <th>Gender</th>
+            <th>Dob</th>
+            <th>Image</th>
+            <th>DepartmentId</th>
+            <th>Action</th>
+
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+@*<script src="~/Scripts/Index.js"></script>*@
+
+<script>
+    $(document).ready(function () {
+
+        EmployeeDatatable();
+
+    });
+    function GetDepartment() {
+        $.ajax({
+            url: '/Home/GetDepartmentList',
+            type: 'get',
+            success: function (data) {
+                //debugger
+                $("#deptList1").empty();
+                var htmlString = "";
+                htmlString += '<option value="" selected>Select department</option>';
+                for (var i = 0; i < data.length; i++) {
+                    htmlString += '<option value="' + data[i].DepartmentId + '">' + data[i].DepartmentName + '</option>';
+                }
+                $("#deptList1").append(htmlString);
+            },
+            error: function (err) {
+                alert(err);
+            }
+
+        });
+    }
+
+    $(document).on('click', '#btnAdd', function () {
+
+        $('#myModal').modal('show');
+        $("#btnUpdate").hide();
+       
+        GetDepartment();
+
+    })
+    $(document).on("click", "#btnSubmit", function () {
+
+        debugger
+        var res = validate();
+        if (res == false) {
+            return false;
+        }
+
+        if (window.FormData !== undefined) {
+
+            var fileupload = $("#image").get(0);
+            var files = fileupload.files;
+
+            var fileData = new FormData();
+
+            for (var i = 0; i < files.length; i++) {
+                fileData.append(files[i].name, files[i]);
+
+            }
+
+
+            fileData.append("FirstName", $('#txtFirstname1').val());
+            fileData.append("LastName", $('#txtLastName1').val());
+            fileData.append("Gender", $('.gender').val());
+            fileData.append("Dob", $('#txtDate1').val());
+            fileData.append("DepartmentId", $('#deptList1').val());
+
+
+
+            $.ajax({
+
+                url: '/Home/InsertEmployee',
+                data: fileData,
+                contentType: false,
+                processData: false,
+                type: "post",
+                success: function (data) {
+                    alert(data);
+                    $('#myModal').modal('hide')
+                    clear()
+                    EmployeeDatatable()
+
+                },
+                error: function (err) {
+                    alert(err);
+                }
+
+            });
+        } else {
+            alert("FormData is not suppoert in the browser ")
+        }
+
+
+    });
+
+
+
+    function Update() {
+
+
+        var res = validate();
+        if (res == false) {
+            return false;
+        }
+
+        var formdata = new FormData()
+        var fileUpload = $("#files").get(0);
+        var files = fileUpload.files;
+        for (var i = 0; i < files.length; i++) {
+            formdata.append(files[i].name, files[i]);
+        }
+        formdata.append("EmpId", $("#hdnEmpid").val())
+        formdata.append("Firstname", $("#txtFirstname1").val())
+        formdata.append("LastName", $("#txtLastName1").val())
+        //formdata.append("Gender", $('.gender').val())
+        formdata.append("Gender", $('input[name="Gender"]:checked').val())
+        formdata.append("DOB", $("#txtDate1").val())
+        formdata.append("Deperment", $("#deptList1").val())
+
+
+        $.ajax({
+            url: "/Home/Update",
+            data: formdata,
+            type: "POST",
+            dataType: "json",
+            contentType: false,
+            processData: false,
+            success: function (result) {
+
+                EmployeeDatatable();
+                clear();
+                $('#myModal').modal('hide');
+
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    function EmployeeDatatable() {
+        $("#demodata").DataTable({
+
+            "processing": true,
+            "serverSide": true,
+            "filter": true,
+            "orderMulti": false,
+            "destroy": true,
+            "ordering": true,
+            "ajax": {
+                "url": '/Home/DisplayListData',
+                "type": "POST",
+                "datatype": "json"
+            },
+           
+            "columns": [
+                { "data": "EmpId", "name": "EmpId", "autoWidth": true }
+                , { "data": "FirstName", "Name": "FirstName", "autoWidth": true }
+                , { "data": "LastName", "name": "LastName", "autoWidth": true }
+                , { "data": "Gender", "name": "Gender", "autoWidth": true }
+                , {
+                    "data": "Dob", "render": function (data, type, row) {
+                        
+                        return moment(row.data).format('MM/DD/YYYY')
+                    }
+                }
+                , {
+                    "data": "Image", "searchable": false,
+                    "sortable": false,
+                    "render": function (data, type, row) {
+                       // debugger
+                        return '   <img src="/Uploads/' + row.Image + '" alt="imge not found"  height="100px" width="100px "/>';
+                    }
+                }
+                , { "data": "DepartmentName", "name": "DepartmentName", "autoWidth": true }
+                , {
+                    "data": "notes",
+                    "searchable": false,
+                    "sortable": false,
+                    "render": function (data, type, row) {
+                       // debugger
+                        return '<td><a onclick="GetDataByID(' + row.EmpId + ')"><i class="icons">edit</i></a></td><td><a onclick=""></a></td><td><a onclick="Delele(' + row.EmpId + ')"><i class="material-icons">delete</i></a></td>';
+                    }
+
+                }
+
+
+            ]
+        });
+    }
+
+    function clear() {
+        $('#txtFirstname1').val("");
+        $('#txtLastName1').val("");
+        $('#DepartmentId').val("");
+        $('#txtDate1').val("");
+        $('.gender').val("");
+
+
+
+    }
+
+    function validate() {
+        var isValid = true;
+        if ($('#txtFirstname1').val() == "") {
+            $('#txtFirstname1').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#txtFirstname1').css('border-color', 'lightgrey');
+        }
+        if ($('#txtLastName1').val().trim() == "") {
+            $('#txtLastName1').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#txtLastName1').css('border-color', 'lightgrey');
+        }
+
+        if ($('#txtDate1').val() == "") {
+            $('#txtDate1').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#txtDate1').css('border-color', 'lightgrey');
+        }
+        return isValid;
+
+        if ($('#deptList1').val() == "") {
+            $('#deptList1').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#deptList1').css('border-color', 'lightgrey');
+        }
+        return isValid;
+    }
+
+    function Delele(ID) {
+        debugger
+        var ans = confirm("Are you sure you want to delete this Record?");
+        if (ans) {
+            $.ajax({
+                url: "/Home/Delete?ID=" + ID,
+                type: "post",
+                dataType: "json",
+                success: function (result) {
+                    EmployeeDatatable();
+
+                },
+                error: function (err) {
+                    alert(err.responseText);
+                }
+            });
+        }
+    }
+
+    function GetDataByID(EmpId) {
+       
+
+        $.ajax({
+            url: '/Home/GetById/' + EmpId,
+            type: 'get',
+            dataType: 'json',
+            success: function (data) {
+                
+                $('#myModal').modal('show');
+                debugger
+                $("#btnUpdate").show();
+                $("#btnSubmit").hide();
+                GetDepartment();
+                $("#hdnEmpid").val(data.EmpId);
+                $("#txtFirstname1").val(data.FirstName);
+                $("#txtLastName1").val(data.LastName);
+              
+                $("#txtDate1").val(data.Dob);
+               
+                $(".gender").val(data.Gender);
+                $("#image").val(data.Image);
+                $("#DepartmentId").val(data.DepartmentId);
+
+            },
+            error: function (data) {
+                alert(data);
+            }
+        });
+    }
+
+</script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
