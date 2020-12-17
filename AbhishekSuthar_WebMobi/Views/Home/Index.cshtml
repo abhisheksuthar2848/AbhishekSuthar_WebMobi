@@ -264,8 +264,8 @@
                 , { "data": "DepartmentName", "name": "DepartmentName", "autoWidth": true }
                 , {
                     "data": "notes",
-                    "searchable": false,
-                    "sortable": false,
+                    "searchable": true,
+                    "sortable": true,
                     "render": function (data, type, row) {
                        // debugger
                         return '<td><a onclick="GetDataByID(' + row.EmpId + ')"><i class="icons">edit</i></a></td><td><a onclick=""></a></td><td><a onclick="Delele(' + row.EmpId + ')"><i class="material-icons">delete</i></a></td>';
